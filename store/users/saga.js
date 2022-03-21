@@ -3,13 +3,24 @@ import { getUserList } from "./api";
 import * as actionTypes from "./constants";
 
 function* workerGetUserList(action) {
-  const response = yield call(getUserList, action.payload);
-  const res_body = response;
+  try {
+    const response = yield call(getUserList, action.payload);
+    const res_body = response;
 
-  yield put({
-    type: actionTypes.USER_LIST_SUCCESS,
-    payload: res_body,
-  });
+    if (res_body) {
+      yield put({
+        type: actionTypes.USER_LIST_SUCCESS,
+        payload: res_body,
+      });
+    } else {
+      yield put({
+        type: actionTypes.USER_LIST_FAIL,
+        payload: res_body,
+      });
+    }
+  } catch (err) {
+    yield put({ type: actionTypes.USER_LIST_FAIL });
+  }
 }
 
 function* watchGetUserList() {
