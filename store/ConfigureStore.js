@@ -1,35 +1,45 @@
-import { createStore, applyMiddleware } from 'redux';
-import createSagaMiddleware from 'redux-saga';
-import { createWrapper,HYDRATE } from 'next-redux-wrapper';
+import { createStore, applyMiddleware } from "redux";
+import createSagaMiddleware from "redux-saga";
+import { persistStore, persistReducer } from "redux-persist";
+import { composeWithDevTools } from "redux-devtools-extension";
+import { createWrapper, HYDRATE } from "next-redux-wrapper";
+import storage from "redux-persist/lib/storage";
+import rootReducer from "./rootReducer";
+import rootSaga from "./rootSaga";
 
-import rootReducer from './rootReducer';
-import rootSaga from './rootSaga';
+const persistConfig = {
+  key: "root",
+  storage,
+  whitelist: ["users"],
+};
+
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const makeStore = () => {
-  // 1: Create the middleware
   const sagaMiddleware = createSagaMiddleware();
 
   const reducer = (state, action) => {
-    if(action.type === HYDRATE){
+    if (action.type === HYDRATE) {
       const nextState = {
         ...state,
-        ...action.payload
-      }
+        ...action.payload,
+      };
       return nextState;
-    }else{
-      return rootReducer(state, action);
+    } else {
+      return persistedReducer(state, action);
     }
-  }
+  };
 
-  // 2: Add an extra parameter for applying middleware
-  const store = createStore(reducer, applyMiddleware(sagaMiddleware));
+  const store = createStore(
+    reducer,
+    composeWithDevTools(applyMiddleware(sagaMiddleware))
+  );
 
-  // 3: Run your sagas on server
+  store.__persistor = persistStore(store);
+
   store.sagaTask = sagaMiddleware.run(rootSaga);
 
-  // 4: now return the store
   return store;
 };
-
 
 export const wrapper = createWrapper(makeStore);

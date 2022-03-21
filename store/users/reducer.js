@@ -1,6 +1,5 @@
 import * as actionTypes from "./constants";
 import getUserList from "./api";
-import { HYDRATE } from "next-redux-wrapper";
 
 const initialState = {
   data: false,
