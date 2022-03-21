@@ -3,13 +3,32 @@ import createSagaMiddleware from "redux-saga";
 import { persistStore, persistReducer } from "redux-persist";
 import { composeWithDevTools } from "redux-devtools-extension";
 import { createWrapper, HYDRATE } from "next-redux-wrapper";
-import storage from "redux-persist/lib/storage";
 import rootReducer from "./rootReducer";
 import rootSaga from "./rootSaga";
+import createWebStorage from "redux-persist/lib/storage/createWebStorage";
+
+const createNoopStorage = () => {
+  return {
+    getItem(_key) {
+      return Promise.resolve(null);
+    },
+    setItem(_key, value) {
+      return Promise.resolve(value);
+    },
+    removeItem(_key) {
+      return Promise.resolve();
+    },
+  };
+};
+
+const storage =
+  typeof window !== "undefined"
+    ? createWebStorage("local")
+    : createNoopStorage();
 
 const persistConfig = {
   key: "root",
-  storage,
+  storage:storage,
   whitelist: ["users"],
 };
 
